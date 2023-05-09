@@ -37,7 +37,7 @@ int main(int argc, char *argv[]) {
 char *datetime_str() {
   char *buf = (char *)malloc(sizeof(char) * 100);
   time_t current_time = time(NULL);
-  struct tm *tm = gmtime(&current_time);
+  struct tm *tm = localtime(&current_time);
 
   strftime(buf, 99, DATE_FORMAT, tm);
 
