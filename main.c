@@ -1,4 +1,5 @@
 #include "config.h"
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
@@ -9,6 +10,12 @@ int main(int argc, char *argv[]) {
     char *dt = datetime_str();
     char *update_cmd[] = {"/usr/bin/xsetroot", "-name", dt, NULL};
     pid_t pid = fork();
+
+    // Ignore dead childs so we won't create lots of zombies!
+    if (signal(SIGCHLD, SIG_IGN) == SIG_ERR) {
+      perror("signal");
+      exit(EXIT_FAILURE);
+    }
 
     switch (pid) {
     case -1:
