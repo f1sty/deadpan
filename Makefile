@@ -9,7 +9,7 @@ main.o: main.c config.h
 	cc -c main.c
 
 clean:
-	rm main.o
+	rm -f main.o
 
 install: deadpan
 	mkdir -p $(DESTDIR)$(PREFIX)/bin
