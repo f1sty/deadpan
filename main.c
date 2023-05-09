@@ -6,9 +6,11 @@
 #include <unistd.h>
 
 int main(int argc, char *argv[]) {
+  char *buf = (char *)malloc(sizeof(char) * 100);
+
   while (1) {
-    char *dt = datetime_str();
-    char *update_cmd[] = {"/usr/bin/xsetroot", "-name", dt, NULL};
+    datetime_str(buf);
+    char *update_cmd[] = {"/usr/bin/xsetroot", "-name", buf, NULL};
     pid_t pid = fork();
 
     // Ignore dead childs so we won't create lots of zombies!
@@ -23,10 +25,9 @@ int main(int argc, char *argv[]) {
       exit(EXIT_FAILURE);
     case 0:
       run(update_cmd);
-      free(dt);
+      free(buf);
       exit(EXIT_SUCCESS);
     default:
-      free(dt);
       sleep(INTERVAL);
     }
   }
@@ -34,14 +35,11 @@ int main(int argc, char *argv[]) {
   return 0;
 }
 
-char *datetime_str() {
-  char *buf = (char *)malloc(sizeof(char) * 100);
+void datetime_str(char *buf) {
   time_t current_time = time(NULL);
   struct tm *tm = localtime(&current_time);
 
   strftime(buf, 99, DATE_FORMAT, tm);
-
-  return buf;
 }
 
 void run(char *cmd[]) {
