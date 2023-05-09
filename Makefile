@@ -1,9 +1,9 @@
 DESTDIR = $(HOME)/.local
 
-all: dpan
+all: deadpan
 
-dpan: main.o
-	cc -o dpan main.o
+deadpan: main.o
+	cc -o deadpan main.o
 
 main.o: main.c config.h
 	cc -c main.c
@@ -11,12 +11,12 @@ main.o: main.c config.h
 clean:
 	rm main.o
 
-install: dpan
+install: deadpan
 	mkdir -p $(DESTDIR)$(PREFIX)/bin
-	cp -f dpan $(DESTDIR)$(PREFIX)/bin
-	chmod 755 $(DESTDIR)$(PREFIX)/bin/dpan
+	cp -f deadpan $(DESTDIR)$(PREFIX)/bin
+	chmod 755 $(DESTDIR)$(PREFIX)/bin/deadpan
 
 uninstall:
-	rm -f $(DESTDIR)$(PREFIX)/bin/dpan
+	rm -f $(DESTDIR)$(PREFIX)/bin/deadpan
 
 .PHONY: all clean install uninstall
