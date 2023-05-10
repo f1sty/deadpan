@@ -63,8 +63,8 @@ void free_space_str(char *fs_str) {
     exit(EXIT_FAILURE);
   }
   // getting free space in bytes
-  long free_space = (fs_stats.f_bavail * fs_stats.f_bsize) / space_divider;
-  snprintf(fs_str, 20, "%ld Gb%s", free_space, DELIMITER);
+  long free_space = fs_stats.f_bavail * fs_stats.f_bsize;
+  snprintf(fs_str, 20, "%ld Gb%s", free_space / space_divider, DELIMITER);
 }
 
 void run(char *cmd[]) {
