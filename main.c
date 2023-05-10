@@ -74,9 +74,22 @@ void free_space_str(char *fs_str) {
 }
 
 void free_mem_str(char *fm_str) {
-  float free_mem =
-      (float)(sysconf(_SC_AVPHYS_PAGES) * sysconf(_SC_PAGE_SIZE)) / divider;
-  snprintf(fm_str, 15, "%.1f Gb%s", free_mem, DELIMITER);
+  // float free_mem =
+  //     (float)(sysconf(_SC_AVPHYS_PAGES) * sysconf(_SC_PAGE_SIZE)) / divider;
+  FILE *meminfo = fopen("/proc/meminfo", "r");
+  int len = 100;
+  char buf[len];
+  unsigned long free_mem_kb;
+
+  for (int i = 0; i < 3; i++) {
+    fgets(buf, len, meminfo);
+  }
+
+  fclose(meminfo);
+
+  sscanf(buf, "MemAvailable:%lu", &free_mem_kb);
+  snprintf(fm_str, 15, "%.1f Gb%s", (float)free_mem_kb / (1024 * 1024),
+           DELIMITER);
 }
 
 void run(char *cmd[]) {
