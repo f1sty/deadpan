@@ -8,20 +8,24 @@
 #include <unistd.h>
 
 static const float divider = 1024 * 1024 * 1024;
+static const short buf_len = 100;
 
 int main(int argc, char *argv[]) {
   char *datetime = (char *)malloc(sizeof(char) * 50);
   char *free_space = (char *)malloc(sizeof(char) * 15);
   char *free_mem = (char *)malloc(sizeof(char) * 15);
+  char *cpu_temprature = (char *)malloc(sizeof(char) * 15);
   // size should be size of all components + num of components
-  char *status = (char *)malloc(sizeof(char) * (80 + 3));
+  char *status = (char *)malloc(sizeof(char) * (95 + 3));
 
   while (1) {
     datetime_str(datetime);
     free_space_str(free_space);
     free_mem_str(free_mem);
+    cpu_temperature_str(cpu_temprature);
 
-    strcpy(status, free_space);
+    strcpy(status, cpu_temprature);
+    strcat(status, free_space);
     strcat(status, free_mem);
     strcat(status, datetime);
 
@@ -42,6 +46,7 @@ int main(int argc, char *argv[]) {
       run(status_cmd);
 
       free(status);
+      free(cpu_temprature);
       free(free_mem);
       free(free_space);
       free(datetime);
@@ -77,13 +82,12 @@ void free_mem_str(char *fm_str) {
   // float free_mem =
   //     (float)(sysconf(_SC_AVPHYS_PAGES) * sysconf(_SC_PAGE_SIZE)) / divider;
   FILE *meminfo = fopen("/proc/meminfo", "r");
-  int len = 100;
-  char buf[len];
+  char buf[buf_len];
   unsigned long free_mem_kb;
 
   // reading until third line, which contains MemAvailable info
   for (int i = 0; i < 3; i++) {
-    fgets(buf, len, meminfo);
+    fgets(buf, buf_len, meminfo);
   }
 
   fclose(meminfo);
@@ -91,6 +95,17 @@ void free_mem_str(char *fm_str) {
   sscanf(buf, "MemAvailable:%lu", &free_mem_kb);
   snprintf(fm_str, 15, "%.1f Gb%s", (float)free_mem_kb / (1024 * 1024),
            DELIMITER);
+}
+
+void cpu_temperature_str(char *ct_str) {
+  float temp;
+  char zone_path[buf_len];
+
+  sprintf(zone_path, "/sys/class/thermal/thermal_zone%d/temp", THERMAL_ZONE);
+
+  FILE *temp_info = fopen(zone_path, "r");
+  fscanf(temp_info, "%f", &temp);
+  snprintf(ct_str, 15, "%.1fC°%s", temp / 1000, DELIMITER);
 }
 
 void run(char *cmd[]) {
