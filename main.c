@@ -81,16 +81,16 @@ void free_space_str(char *fs_str) {
 void free_mem_str(char *fm_str) {
   // float free_mem =
   //     (float)(sysconf(_SC_AVPHYS_PAGES) * sysconf(_SC_PAGE_SIZE)) / divider;
-  FILE *meminfo = fopen("/proc/meminfo", "r");
+  FILE *mem_info = fopen("/proc/meminfo", "r");
   char buf[buf_len];
   unsigned long free_mem_kb;
 
   // reading until third line, which contains MemAvailable info
   for (int i = 0; i < 3; i++) {
-    fgets(buf, buf_len, meminfo);
+    fgets(buf, buf_len, mem_info);
   }
 
-  fclose(meminfo);
+  fclose(mem_info);
 
   sscanf(buf, "MemAvailable:%lu", &free_mem_kb);
   snprintf(fm_str, 15, "%.1f Gb%s", (float)free_mem_kb / (1024 * 1024),
@@ -105,6 +105,8 @@ void cpu_temperature_str(char *ct_str) {
 
   FILE *temp_info = fopen(zone_path, "r");
   fscanf(temp_info, "%f", &temp);
+  fclose(temp_info);
+
   snprintf(ct_str, 15, "%.1fC°%s", temp / 1000, DELIMITER);
 }
 
