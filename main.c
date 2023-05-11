@@ -25,10 +25,10 @@ int main(int argc, char *argv[]) {
     strcat(status, free_mem);
     strcat(status, datetime);
 
-    char *update_cmd[] = {"/usr/bin/xsetroot", "-name", status, NULL};
+    char *status_cmd[] = {"/usr/bin/xsetroot", "-name", status, NULL};
     pid_t pid = fork();
 
-    // Ignore dead childs so we won't create lots of zombies!
+    // ignore dead childs so we won't create lots of zombies!
     if (signal(SIGCHLD, SIG_IGN) == SIG_ERR) {
       perror("signal");
       exit(EXIT_FAILURE);
@@ -39,7 +39,7 @@ int main(int argc, char *argv[]) {
       perror("fork");
       exit(EXIT_FAILURE);
     case 0:
-      run(update_cmd);
+      run(status_cmd);
 
       free(status);
       free(free_mem);
@@ -81,6 +81,7 @@ void free_mem_str(char *fm_str) {
   char buf[len];
   unsigned long free_mem_kb;
 
+  // reading until third line, which contains MemAvailable info
   for (int i = 0; i < 3; i++) {
     fgets(buf, len, meminfo);
   }
