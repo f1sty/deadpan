@@ -8,15 +8,15 @@
 #include <unistd.h>
 
 static const float divider = 1024 * 1024 * 1024;
-static const short buf_len = 100;
+static const size_t buf_len = 100;
 
 int main(int argc, char *argv[]) {
-  char *datetime = (char *)malloc(sizeof(char) * 50);
-  char *free_space = (char *)malloc(sizeof(char) * 15);
-  char *free_mem = (char *)malloc(sizeof(char) * 15);
-  char *cpu_temprature = (char *)malloc(sizeof(char) * 15);
+  char *datetime = malloc(sizeof(char) * 50);
+  char *free_space = malloc(sizeof(char) * 15);
+  char *free_mem = malloc(sizeof(char) * 15);
+  char *cpu_temprature = malloc(sizeof(char) * 15);
   // size should be size of all components + num of components
-  char *status = (char *)malloc(sizeof(char) * (95 + 3));
+  char *status = malloc(sizeof(char) * (95 + 3));
 
   while (1) {
     datetime_str(datetime);
@@ -56,6 +56,12 @@ int main(int argc, char *argv[]) {
       sleep(INTERVAL);
     }
   }
+
+  free(status);
+  free(cpu_temprature);
+  free(free_mem);
+  free(free_space);
+  free(datetime);
 
   return 0;
 }
@@ -101,7 +107,8 @@ void cpu_temperature_str(char *ct_str) {
   float temp;
   char zone_path[buf_len];
 
-  sprintf(zone_path, "/sys/class/thermal/thermal_zone%d/temp", THERMAL_ZONE);
+  snprintf(zone_path, buf_len - 1, "/sys/class/thermal/thermal_zone%d/temp",
+           THERMAL_ZONE);
 
   FILE *temp_info = fopen(zone_path, "r");
   fscanf(temp_info, "%f", &temp);
