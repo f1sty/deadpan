@@ -4,5 +4,5 @@ Minimal status bar for my `dwm` setup.
 
 # TODO
 
-Extract comments in here, and add further documentation. Testing misused word.
+- [ ] fix first X start bug (pipewire isn't started, `volume.sh` script failing)
 
