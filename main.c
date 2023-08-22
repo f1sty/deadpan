@@ -15,14 +15,14 @@ int main(int argc, char *argv[]) {
   char *free_space = calloc(10, sizeof(char));
   char *free_memory = calloc(10, sizeof(char));
   char *cpu_temperature = calloc(10, sizeof(char));
-  char *volume = calloc(10, sizeof(char));
+  /* char *volume = calloc(10, sizeof(char)); */
   char *status = calloc(100, sizeof(char));
 
   while (1) {
     cpu_temperature_str(cpu_temperature);
     free_space_str(free_space);
     free_memory_str(free_memory);
-    volume_str(volume);
+    /* volume_str(volume); */
     date_time_str(date_time);
 
     strcpy(status, cpu_temperature);
@@ -31,8 +31,8 @@ int main(int argc, char *argv[]) {
     delimiter(status);
     strcat(status, free_memory);
     delimiter(status);
-    strcat(status, volume);
-    delimiter(status);
+    /* strcat(status, volume); */
+    /* delimiter(status); */
     strcat(status, date_time);
 
     char *status_cmd[] = {"/usr/bin/xsetroot", "-name", status, NULL};
@@ -54,7 +54,7 @@ int main(int argc, char *argv[]) {
       free(cpu_temperature);
       free(free_space);
       free(free_memory);
-      free(volume);
+      /* free(volume); */
       free(date_time);
       free(status);
 
@@ -67,7 +67,7 @@ int main(int argc, char *argv[]) {
   free(cpu_temperature);
   free(free_space);
   free(free_memory);
-  free(volume);
+  /* free(volume); */
   free(date_time);
   free(status);
 
