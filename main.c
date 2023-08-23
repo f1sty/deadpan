@@ -39,10 +39,10 @@ int main(int argc, char *argv[]) {
     pid_t pid = fork();
 
     // ignore dead childs so we won't create lots of zombies!
-    /* if (signal(SIGCHLD, SIG_IGN) == SIG_ERR) { */
-    /*   perror("signal"); */
-    /*   exit(EXIT_FAILURE); */
-    /* } */
+    if (signal(SIGCHLD, SIG_IGN) == SIG_ERR) {
+      perror("signal");
+      exit(EXIT_FAILURE);
+    }
 
     switch (pid) {
     case -1:
