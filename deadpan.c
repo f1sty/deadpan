@@ -107,7 +107,7 @@ void cpu_temperature_str(char *ct_str) {
   char zone_path[BUF_SIZE] = {0};
 
   snprintf(zone_path, BUF_SIZE, "/sys/class/thermal/thermal_zone%d/temp",
-      THERMAL_ZONE);
+           THERMAL_ZONE);
 
   FILE *fp;
   if ((fp = fopen(zone_path, "r")) == NULL) {
