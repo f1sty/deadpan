@@ -4,13 +4,18 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/statvfs.h>
+#include <sys/wait.h>
 #include <time.h>
 #include <unistd.h>
 
 #define DIVIDER (1024 * 1024 * 1024)
 #define BUF_SIZE 50
 
-int main(int argc, char *argv[]) {
+int main(void) {
+  pid_t pid;
+  struct sigaction sa;
+  sa.sa_handler = SIG_IGN;
+
   char *date_time = calloc(33, sizeof(char));
   char *free_space = calloc(10, sizeof(char));
   char *free_memory = calloc(10, sizeof(char));
@@ -36,32 +41,19 @@ int main(int argc, char *argv[]) {
     strcat(status, date_time);
 
     char *status_cmd[] = {"/usr/bin/xsetroot", "-name", status, NULL};
-    pid_t pid = fork();
 
-    // ignore dead childs so we won't create lots of zombies!
-    if (signal(SIGCHLD, SIG_IGN) == SIG_ERR) {
+    // ignore dead children boooo
+    if (sigaction(SIGCHLD, &sa, NULL) == -1) {
       perror("signal");
       exit(EXIT_FAILURE);
     }
 
-    switch (pid) {
-    case -1:
-      perror("fork");
-      exit(EXIT_FAILURE);
-    case 0:
+    if ((pid = fork()) == 0) {
       run(status_cmd);
-
-      free(cpu_temperature);
-      free(free_space);
-      free(free_memory);
-      /* free(volume); */
-      free(date_time);
-      free(status);
-
-      exit(EXIT_SUCCESS);
-    default:
-      sleep(INTERVAL);
     }
+
+    wait(NULL);
+    sleep(INTERVAL);
   }
 
   free(cpu_temperature);
@@ -96,7 +88,7 @@ void free_memory_str(char *fm_str) {
   // float free_mem =
   //     (float)(sysconf(_SC_AVPHYS_PAGES) * sysconf(_SC_PAGE_SIZE)) / divider;
   FILE *mem_info = fopen("/proc/meminfo", "r");
-  char buf[BUF_SIZE] = {};
+  char buf[BUF_SIZE] = {0};
   unsigned long free_mem_kb;
 
   // reading until third line, which contains MemAvailable info
@@ -112,7 +104,7 @@ void free_memory_str(char *fm_str) {
 
 void cpu_temperature_str(char *ct_str) {
   float temp;
-  char zone_path[BUF_SIZE] = {};
+  char zone_path[BUF_SIZE] = {0};
 
   snprintf(zone_path, BUF_SIZE, "/sys/class/thermal/thermal_zone%d/temp",
            THERMAL_ZONE);
@@ -156,6 +148,7 @@ void delimiter(char *str) { strcat(str, DELIMITER); }
 void run(char *cmd[]) {
   char *env[] = {"DISPLAY=:0", NULL};
 
-  execve(cmd[0], cmd, env);
-  perror("execve");
+  if (execve(cmd[0], cmd, env) == -1) {
+    perror("execve");
+  }
 }
