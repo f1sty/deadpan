@@ -131,7 +131,11 @@ void volume_str(char *vm_str) {
   }
 
   fread(vm_str, 10, sizeof(char), fp);
-  pclose(fp);
+
+  if (pclose(fp) == -1) {
+    perror("pclose");
+    exit(EXIT_FAILURE);
+  }
 }
 
 void delimiter(char *str) { strcat(str, DELIMITER); }
