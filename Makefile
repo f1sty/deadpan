@@ -1,10 +1,13 @@
-DESTDIR = $(HOME)/.local
+DESTDIR=$(HOME)/.local
 
-CFLAGS = -Wall -Wextra -pedantic
-TARGET = deadpan
-OBJECTS = $(TARGET:=.o)
+CFLAGS=-Wall -Wextra -pedantic
+TARGET=deadpan
+OBJECTS=$(TARGET:=.o)
 
 all: config.h $(TARGET)
+
+debug: CFLAGS+=-DDEBUG -ggdb
+debug: $(TARGET)
 
 $(TARGET): $(OBJECTS)
 	gcc -o $@ $<
@@ -26,4 +29,4 @@ install: $(TARGET)
 uninstall:
 	rm -f $(DESTDIR)$(PREFIX)/bin/$(TARGET)
 
-.PHONY: all clean install uninstall
+.PHONY: all debug clean install uninstall
