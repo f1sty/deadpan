@@ -1,10 +1,8 @@
 #include "config.h"
-/* #include <signal.h> */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/statvfs.h>
-/* #include <sys/wait.h> */
 #include <time.h>
 #include <unistd.h>
 
@@ -12,13 +10,6 @@
 #define BUF_SIZE 50
 
 int main(void) {
-  /* struct sigaction sa; */
-  /* memset(&sa, 0, sizeof(struct sigaction)); */
-  /* sa.sa_handler = SIG_DFL; */
-  /* sa.sa_flags = SA_NOCLDWAIT; */
-
-  /* sigaction(SIGCHLD, &sa, NULL); */
-
   char *date_time = calloc(33, sizeof(char));
   char *free_space = calloc(10, sizeof(char));
   char *free_memory = calloc(10, sizeof(char));
