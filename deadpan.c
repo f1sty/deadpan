@@ -1,10 +1,10 @@
 #include "config.h"
-#include <signal.h>
+/* #include <signal.h> */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/statvfs.h>
-#include <sys/wait.h>
+/* #include <sys/wait.h> */
 #include <time.h>
 #include <unistd.h>
 
@@ -12,12 +12,12 @@
 #define BUF_SIZE 50
 
 int main(void) {
-  struct sigaction sa;
-  memset(&sa, 0, sizeof(struct sigaction));
-  sa.sa_handler = SIG_DFL;
-  sa.sa_flags = SA_NOCLDWAIT;
+  /* struct sigaction sa; */
+  /* memset(&sa, 0, sizeof(struct sigaction)); */
+  /* sa.sa_handler = SIG_DFL; */
+  /* sa.sa_flags = SA_NOCLDWAIT; */
 
-  sigaction(SIGCHLD, &sa, NULL);
+  /* sigaction(SIGCHLD, &sa, NULL); */
 
   char *date_time = calloc(33, sizeof(char));
   char *free_space = calloc(10, sizeof(char));
@@ -43,11 +43,14 @@ int main(void) {
     delimiter(status);
     strcat(status, date_time);
 
-    char *status_cmd[] = {"/usr/bin/xsetroot", "-name", status, NULL};
+    char status_cmd[1024];
+    snprintf(status_cmd, sizeof(status_cmd), "xsetroot -name \"%s\"", status);
 
-    if (fork() == 0) {
-      run(status_cmd);
+    if(system(status_cmd) != 0) {
+      perror("system(cmd)");
+      break;
     }
+
     sleep(INTERVAL);
   }
 
@@ -128,11 +131,7 @@ void volume_str(char *vm_str) {
   }
 
   fread(vm_str, 10, sizeof(char), fp);
+  pclose(fp);
 }
 
 void delimiter(char *str) { strcat(str, DELIMITER); }
-
-void run(char *cmd[]) {
-  char *env[] = {"DISPLAY=:0", NULL};
-  execve(cmd[0], cmd, env);
-}
