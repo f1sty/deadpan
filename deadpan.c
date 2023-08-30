@@ -12,9 +12,12 @@
 #define BUF_SIZE 50
 
 int main(void) {
-  pid_t pid;
   struct sigaction sa;
-  sa.sa_handler = SIG_IGN;
+  memset(&sa, 0, sizeof(struct sigaction));
+  sa.sa_handler = SIG_DFL;
+  sa.sa_flags = SA_NOCLDWAIT;
+
+  sigaction(SIGCHLD, &sa, NULL);
 
   char *date_time = calloc(33, sizeof(char));
   char *free_space = calloc(10, sizeof(char));
@@ -42,17 +45,9 @@ int main(void) {
 
     char *status_cmd[] = {"/usr/bin/xsetroot", "-name", status, NULL};
 
-    // ignore dead children boooo
-    if (sigaction(SIGCHLD, &sa, NULL) == -1) {
-      perror("signal");
-      exit(EXIT_FAILURE);
-    }
-
-    if ((pid = fork()) == 0) {
+    if (fork() == 0) {
       run(status_cmd);
     }
-
-    wait(NULL);
     sleep(INTERVAL);
   }
 
@@ -147,8 +142,5 @@ void delimiter(char *str) { strcat(str, DELIMITER); }
 
 void run(char *cmd[]) {
   char *env[] = {"DISPLAY=:0", NULL};
-
-  if (execve(cmd[0], cmd, env) == -1) {
-    perror("execve");
-  }
+  execve(cmd[0], cmd, env);
 }
