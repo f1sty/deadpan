@@ -1,4 +1,5 @@
 #include "config.h"
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -7,62 +8,24 @@
 #include <unistd.h>
 
 #define DIVIDER (1024 * 1024 * 1024)
-#define BUF_SIZE 50
+#define BUFFER_SIZE 128
 
-int main(void) {
-  char *date_time = calloc(33, sizeof(char));
-  char *free_space = calloc(10, sizeof(char));
-  char *free_memory = calloc(10, sizeof(char));
-  char *cpu_temperature = calloc(10, sizeof(char));
-  char *volume = calloc(10, sizeof(char));
-  char *status = calloc(100, sizeof(char));
-
-  while (1) {
-    cpu_temperature_str(cpu_temperature);
-    free_space_str(free_space);
-    free_memory_str(free_memory);
-    volume_str(volume);
-    date_time_str(date_time);
-
-    strcpy(status, cpu_temperature);
-    delimiter(status);
-    strcat(status, free_space);
-    delimiter(status);
-    strcat(status, free_memory);
-    delimiter(status);
-    strcat(status, volume);
-    delimiter(status);
-    strcat(status, date_time);
-
-    char status_cmd[1024];
-    snprintf(status_cmd, sizeof(status_cmd), "xsetroot -name \"%s\"", status);
-
-    if(system(status_cmd) != 0) {
-      perror("system(cmd)");
-      break;
-    }
-
-    sleep(INTERVAL);
-  }
-
-  free(cpu_temperature);
-  free(free_space);
-  free(free_memory);
-  free(volume);
-  free(date_time);
-  free(status);
-
-  return 0;
+void add_widget(char *widgets, void(widget)(char *), bool add_delimiter) {
+  widget(widgets);
+  if (add_delimiter) delimiter(widgets);
 }
 
-void date_time_str(char *dt_str) {
+void date_time(char *widgets) {
+  char retval[BUFFER_SIZE] = {0};
   time_t current_time = time(NULL);
   struct tm *tm = localtime(&current_time);
 
-  strftime(dt_str, 33, DATE_FORMAT, tm);
+  strftime(retval, BUFFER_SIZE, DATE_FORMAT, tm);
+  strcat(widgets, retval);
 }
 
-void free_space_str(char *fs_str) {
+void free_space(char *widgets) {
+  char retval[BUFFER_SIZE] = {0};
   struct statvfs fs_stats;
   if (statvfs(MOUNT_POINT, &fs_stats) == -1) {
     perror("statvfs");
@@ -70,32 +33,36 @@ void free_space_str(char *fs_str) {
   }
   // getting free space in Gb
   float free_space = (float)(fs_stats.f_bavail * fs_stats.f_bsize) / DIVIDER;
-  snprintf(fs_str, 10, "%.1f Gb", free_space);
+  snprintf(retval, 10, "%.1f Gb", free_space);
+  strcat(widgets, retval);
 }
 
-void free_memory_str(char *fm_str) {
+void free_memory(char *widgets) {
+  char retval[BUFFER_SIZE] = {0};
   // float free_mem =
   //     (float)(sysconf(_SC_AVPHYS_PAGES) * sysconf(_SC_PAGE_SIZE)) / divider;
   FILE *mem_info = fopen("/proc/meminfo", "r");
-  char buf[BUF_SIZE] = {0};
+  char buf[BUFFER_SIZE] = {0};
   unsigned long free_mem_kb;
 
   // reading until third line, which contains MemAvailable info
   for (int i = 0; i < 3; i++) {
-    fgets(buf, BUF_SIZE, mem_info);
+    fgets(buf, BUFFER_SIZE, mem_info);
   }
 
   fclose(mem_info);
 
   sscanf(buf, "MemAvailable:%lu", &free_mem_kb);
-  snprintf(fm_str, 10, "%.1f Gb", (float)free_mem_kb / (1024 * 1024));
+  snprintf(retval, BUFFER_SIZE, "%.1f Gb", (float)free_mem_kb / (1024 * 1024));
+  strcat(widgets, retval);
 }
 
-void cpu_temperature_str(char *ct_str) {
-  float temp;
-  char zone_path[BUF_SIZE] = {0};
+void cpu_temperature(char *widgets) {
+  float temperature;
+  char zone_path[BUFFER_SIZE] = {0};
+  char retval[BUFFER_SIZE] = {0};
 
-  snprintf(zone_path, BUF_SIZE, "/sys/class/thermal/thermal_zone%d/temp",
+  snprintf(zone_path, BUFFER_SIZE, "/sys/class/thermal/thermal_zone%d/temp",
            THERMAL_ZONE);
 
   FILE *fp;
@@ -103,16 +70,18 @@ void cpu_temperature_str(char *ct_str) {
     perror("fopen");
     exit(EXIT_FAILURE);
   }
-  fscanf(fp, "%f", &temp);
+  fscanf(fp, "%f", &temperature);
   if (fclose(fp)) {
     perror("fclose");
     exit(EXIT_FAILURE);
   }
 
-  snprintf(ct_str, 10, "%.1f°C", temp / 1000);
+  snprintf(retval, BUFFER_SIZE, "%.1f°C", temperature / 1000);
+  strcat(widgets, retval);
 }
 
-void volume_str(char *vm_str) {
+void volume(char *widgets) {
+  char retval[BUFFER_SIZE] = {0};
   char *cmd = VOLUME_CMD;
   FILE *fp;
 
@@ -121,12 +90,37 @@ void volume_str(char *vm_str) {
     exit(EXIT_FAILURE);
   }
 
-  fread(vm_str, 10, sizeof(char), fp);
+  fread(retval, BUFFER_SIZE, sizeof(char), fp);
 
   if (pclose(fp) == -1) {
     perror("pclose");
     exit(EXIT_FAILURE);
   }
+  strcat(widgets, retval);
 }
 
 void delimiter(char *str) { strcat(str, DELIMITER); }
+
+int main(void) {
+  char status_cmd[1024] = {0};
+  char widgets[768] = {0};
+
+  while (true) {
+    add_widget(widgets, cpu_temperature, true);
+    add_widget(widgets, free_space, true);
+    add_widget(widgets, free_memory, true);
+    add_widget(widgets, volume, true);
+    add_widget(widgets, date_time, false);
+
+    snprintf(status_cmd, 1024, "xsetroot -name \"%s\"", widgets);
+
+    if (system(status_cmd) != 0) {
+      perror("system(cmd)");
+      break;
+    }
+
+    memset(widgets, 0, 768);
+    sleep(INTERVAL);
+  }
+  return 0;
+}
