@@ -1,4 +1,3 @@
-#include <sys/statvfs.h>
 #define DATE_FORMAT "%F %H:%M:%S"
 #define MOUNT_POINT "/"
 #define INTERVAL 1
