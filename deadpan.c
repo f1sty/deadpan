@@ -12,7 +12,8 @@
 
 void add_widget(char *widgets, void(widget)(char *), bool add_delimiter) {
   widget(widgets);
-  if (add_delimiter) delimiter(widgets);
+  if (add_delimiter)
+    delimiter(widgets);
 }
 
 void date_time(char *widgets) {
