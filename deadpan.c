@@ -81,9 +81,8 @@ void cpu_temperature(char *widgets) {
   strcat(widgets, retval);
 }
 
-void volume(char *widgets) {
+char *run_external(char *cmd) {
   char retval[BUFFER_SIZE] = {0};
-  char *cmd = VOLUME_CMD;
   FILE *fp;
 
   if ((fp = popen(cmd, "r")) == NULL) {
@@ -97,8 +96,34 @@ void volume(char *widgets) {
     perror("pclose");
     exit(EXIT_FAILURE);
   }
-  strcat(widgets, retval);
+  return strdup(retval);
 }
+
+void volume(char *widgets) {
+  strcat(widgets, run_external(VOLUME_CMD));
+  /* char retval[BUFFER_SIZE] = {0}; */
+  /* char *cmd = VOLUME_CMD; */
+  /* FILE *fp; */
+
+  /* if ((fp = popen(cmd, "r")) == NULL) { */
+  /*   perror("popen"); */
+  /*   exit(EXIT_FAILURE); */
+  /* } */
+
+  /* fread(retval, BUFFER_SIZE, sizeof(char), fp); */
+
+  /* if (pclose(fp) == -1) { */
+  /*   perror("pclose"); */
+  /*   exit(EXIT_FAILURE); */
+  /* } */
+  /* strcat(widgets, retval); */
+}
+
+void music(char *widgets) {
+  strcat(widgets, run_external(MUSIC_CMD));
+}
+
+
 
 void delimiter(char *str) { strcat(str, DELIMITER); }
 
@@ -107,6 +132,7 @@ int main(void) {
   char widgets[768] = {0};
 
   while (true) {
+    add_widget(widgets, music, true);
     add_widget(widgets, cpu_temperature, true);
     add_widget(widgets, free_space, true);
     add_widget(widgets, free_memory, true);
