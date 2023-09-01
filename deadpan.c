@@ -100,29 +100,11 @@ char *run_external(char *cmd) {
 
 void volume(char *widgets) {
   strcat(widgets, run_external(VOLUME_CMD));
-  /* char retval[BUFFER_SIZE] = {0}; */
-  /* char *cmd = VOLUME_CMD; */
-  /* FILE *fp; */
-
-  /* if ((fp = popen(cmd, "r")) == NULL) { */
-  /*   perror("popen"); */
-  /*   exit(EXIT_FAILURE); */
-  /* } */
-
-  /* fread(retval, BUFFER_SIZE, sizeof(char), fp); */
-
-  /* if (pclose(fp) == -1) { */
-  /*   perror("pclose"); */
-  /*   exit(EXIT_FAILURE); */
-  /* } */
-  /* strcat(widgets, retval); */
 }
 
 void music(char *widgets) {
   strcat(widgets, run_external(MUSIC_CMD));
 }
-
-
 
 void delimiter(char *str) { strcat(str, DELIMITER); }
 
