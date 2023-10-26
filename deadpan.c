@@ -1,15 +1,19 @@
 #include "config.h"
 #include <stdbool.h>
-#include <stddef.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/statvfs.h>
 #include <time.h>
-#include <unistd.h>
 
-#define DIVIDER (1024 * 1024 * 1024)
 #define BUFFER_SIZE 128
+#define WIDGETS_BUFFER_SIZE 896
+#define STATUS_LINE_BUFFER_SIZE 1024
+#define FREE_DISK_DIVIDER (1024 << 20)
+#define FREE_RAM_DIVIDER (1024 << 10)
+
+void delimiter(char *str) { strcat(str, DELIMITER); }
 
 void add_widget(char *widgets, void(widget)(char *), bool add_delimiter) {
   widget(widgets);
@@ -17,132 +21,141 @@ void add_widget(char *widgets, void(widget)(char *), bool add_delimiter) {
     delimiter(widgets);
 }
 
-void battery_status(char *widgets) {
-  char path[1024] = {0};
-  char *capacity = calloc(10, sizeof(*capacity));
-  snprintf(path, 1024, "/sys/class/power_supply/BAT%d/capacity", BATTERY);
+void battery_charge(char *widgets) {
+  char path[BUFFER_SIZE] = {0};
+  snprintf(path, BUFFER_SIZE, "/sys/class/power_supply/BAT%d/capacity",
+           BATTERY);
+
+  char retval[BUFFER_SIZE] = {0};
   FILE *fd = fopen(path, "r");
-  fread(capacity, sizeof(*capacity), 10, fd);
-  fclose(fd);
-  strcat(capacity, "%");
-  strcat(widgets, capacity);
+  if (!fd) {
+    perror("fopen");
+    snprintf(retval, BUFFER_SIZE, NA_STRING);
+  } else {
+    fread(retval, sizeof(*retval), BUFFER_SIZE, fd);
+    if (ferror(fd)) {
+      fprintf(stderr, "fread error\n");
+      exit(EXIT_FAILURE);
+    };
+
+    fclose(fd);
+    strcat(retval, "%");
+  };
+  strcat(widgets, retval);
 }
 
 void date_time(char *widgets) {
-  char retval[BUFFER_SIZE] = {0};
   time_t current_time = time(NULL);
   struct tm *tm = localtime(&current_time);
 
+  char retval[BUFFER_SIZE] = {0};
   strftime(retval, BUFFER_SIZE, DATE_FORMAT, tm);
   strcat(widgets, retval);
 }
 
-void free_space(char *widgets) {
+void free_disk(char *widgets) {
   char retval[BUFFER_SIZE] = {0};
   struct statvfs fs_stats;
   if (statvfs(MOUNT_POINT, &fs_stats) == -1) {
     perror("statvfs");
-    exit(EXIT_FAILURE);
-  }
-  // getting free space in Gb
-  float free_space = (float)(fs_stats.f_bavail * fs_stats.f_bsize) / DIVIDER;
-  snprintf(retval, 10, "%.1f Gb", free_space);
+    snprintf(retval, BUFFER_SIZE, NA_STRING);
+  } else {
+    float free_space =
+        (float)(fs_stats.f_bavail * fs_stats.f_bsize) / FREE_DISK_DIVIDER;
+
+    snprintf(retval, BUFFER_SIZE, "%.1f Gb", free_space);
+  };
   strcat(widgets, retval);
 }
 
 void free_memory(char *widgets) {
   char retval[BUFFER_SIZE] = {0};
-  // float free_mem =
-  //     (float)(sysconf(_SC_AVPHYS_PAGES) * sysconf(_SC_PAGE_SIZE)) / divider;
-  FILE *mem_info = fopen("/proc/meminfo", "r");
-  char buf[BUFFER_SIZE] = {0};
-  unsigned long free_mem_kb;
+  FILE *fd = fopen("/proc/meminfo", "r");
+  if (!fd) {
+    perror("fopen");
+    snprintf(retval, BUFFER_SIZE, NA_STRING);
+  } else {
+    fread(retval, sizeof(*retval), BUFFER_SIZE, fd);
+    if (ferror(fd)) {
+      fprintf(stderr, "fread error\n");
+      exit(EXIT_FAILURE);
+    }
 
-  // reading until third line, which contains MemAvailable info
-  for (int i = 0; i < 3; i++) {
-    fgets(buf, BUFFER_SIZE, mem_info);
-  }
+    fclose(fd);
 
-  fclose(mem_info);
+    uint32_t free_mem_kb;
+    char *needle = strtok(strstr(retval, "MemAvailable:"), "\n") + 13;
+    sscanf(needle, "%u", &free_mem_kb);
 
-  sscanf(buf, "MemAvailable:%lu", &free_mem_kb);
-  snprintf(retval, BUFFER_SIZE, "%.1f Gb", (float)free_mem_kb / (1024 * 1024));
+    snprintf(retval, BUFFER_SIZE, "%.1f Gb",
+             (float)free_mem_kb / FREE_RAM_DIVIDER);
+  };
   strcat(widgets, retval);
 }
 
 void cpu_temperature(char *widgets) {
-  float temperature;
-  char zone_path[BUFFER_SIZE] = {0};
-  char retval[BUFFER_SIZE] = {0};
-
-  snprintf(zone_path, BUFFER_SIZE, "/sys/class/thermal/thermal_zone%d/temp",
+  char path[BUFFER_SIZE] = {0};
+  snprintf(path, BUFFER_SIZE, "/sys/class/thermal/thermal_zone%d/temp",
            THERMAL_ZONE);
 
-  FILE *fp;
-  if ((fp = fopen(zone_path, "r")) == NULL) {
+  char retval[BUFFER_SIZE] = {0};
+  FILE *fd = fopen(path, "r");
+  if (!fd) {
     perror("fopen");
-    exit(EXIT_FAILURE);
-  }
-  fscanf(fp, "%f", &temperature);
-  if (fclose(fp)) {
-    perror("fclose");
-    exit(EXIT_FAILURE);
-  }
+    snprintf(retval, BUFFER_SIZE, NA_STRING);
+  } else {
+    uint32_t temperature;
+    fscanf(fd, "%u", &temperature);
+    fclose(fd);
 
-  snprintf(retval, BUFFER_SIZE, "%.1f°C", temperature / 1000);
+    snprintf(retval, BUFFER_SIZE, "%u°C", (uint32_t)(temperature / 1000));
+  };
   strcat(widgets, retval);
 }
 
 char *run_external(char *cmd) {
-  char retval[BUFFER_SIZE] = {0};
-  FILE *fp;
-
-  if ((fp = popen(cmd, "r")) == NULL) {
+  FILE *fd = popen(cmd, "r");
+  if (!fd) {
     perror("popen");
     exit(EXIT_FAILURE);
   }
 
-  fread(retval, BUFFER_SIZE, sizeof(char), fp);
+  char retval[BUFFER_SIZE] = {0};
+  fread(retval, sizeof(*retval), BUFFER_SIZE, fd);
 
-  if (pclose(fp) == -1) {
-    perror("pclose");
-    exit(EXIT_FAILURE);
-  }
+  pclose(fd);
+
   return strdup(retval);
 }
 
-void volume(char *widgets) {
-  strcat(widgets, run_external(VOLUME_CMD));
-}
+void volume(char *widgets) { strcat(widgets, run_external(VOLUME_CMD)); }
 
-void music(char *widgets) {
-  strcat(widgets, run_external(MUSIC_CMD));
-}
-
-void delimiter(char *str) { strcat(str, DELIMITER); }
+void music(char *widgets) { strcat(widgets, run_external(MUSIC_CMD)); }
 
 int main(void) {
-  char status_cmd[1024] = {0};
-  char widgets[768] = {0};
+  char status_cmd[STATUS_LINE_BUFFER_SIZE] = {0};
+  char widgets[WIDGETS_BUFFER_SIZE] = {0};
+  struct timespec interval = {.tv_sec = INTERVAL, .tv_nsec = 0};
 
   while (true) {
     add_widget(widgets, music, true);
     add_widget(widgets, cpu_temperature, true);
-    add_widget(widgets, battery_status, true);
-    add_widget(widgets, free_space, true);
+    add_widget(widgets, battery_charge, true);
+    add_widget(widgets, free_disk, true);
     add_widget(widgets, free_memory, true);
     add_widget(widgets, volume, true);
     add_widget(widgets, date_time, false);
 
-    snprintf(status_cmd, 1024, "xsetroot -name \"%s\"", widgets);
+    snprintf(status_cmd, STATUS_LINE_BUFFER_SIZE, "xsetroot -name \"%s\"",
+             widgets);
 
     if (system(status_cmd) != 0) {
       perror("system(cmd)");
       break;
     }
 
-    memset(widgets, 0, 768);
-    sleep(INTERVAL);
+    memset(widgets, 0, WIDGETS_BUFFER_SIZE);
+    nanosleep(&interval, NULL);
   }
   return 0;
 }
