@@ -1,5 +1,6 @@
 #include "config.h"
 #include <stdbool.h>
+#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -14,6 +15,17 @@ void add_widget(char *widgets, void(widget)(char *), bool add_delimiter) {
   widget(widgets);
   if (add_delimiter)
     delimiter(widgets);
+}
+
+void battery_status(char *widgets) {
+  char path[1024] = {0};
+  char *capacity = calloc(10, sizeof(*capacity));
+  snprintf(path, 1024, "/sys/class/power_supply/BAT%d/capacity", BATTERY);
+  FILE *fd = fopen(path, "r");
+  fread(capacity, sizeof(*capacity), 10, fd);
+  fclose(fd);
+  strcat(capacity, "%");
+  strcat(widgets, capacity);
 }
 
 void date_time(char *widgets) {
@@ -116,6 +128,7 @@ int main(void) {
   while (true) {
     add_widget(widgets, music, true);
     add_widget(widgets, cpu_temperature, true);
+    add_widget(widgets, battery_status, true);
     add_widget(widgets, free_space, true);
     add_widget(widgets, free_memory, true);
     add_widget(widgets, volume, true);

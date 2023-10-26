@@ -5,7 +5,7 @@
 // to get right thermal zone number for CPU temp do
 // `cat /sys/class/thermal/thermal_zone<THERMAL_ZONE>/type`
 // You are looking for `x86_pkg_temp` type.
-#define THERMAL_ZONE 2
+#define THERMAL_ZONE 1
 #define VOLUME_CMD "volume.sh"
 #define MUSIC_CMD "cmus-tagline.sh"
 
