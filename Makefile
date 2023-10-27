@@ -15,9 +15,6 @@ $(TARGET): $(OBJECTS)
 $(OBJECTS): %.o: %.c
 	gcc $(CFLAGS) -c $<
 
-config.h: config.def.h
-	cp config.def.h config.h
-
 clean:
 	rm -f $(OBJECTS) $(TARGET)
 
