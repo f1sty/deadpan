@@ -1,4 +1,3 @@
-#include "config.h"
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -6,6 +5,16 @@
 #include <string.h>
 #include <sys/statvfs.h>
 #include <time.h>
+
+void music(char *);
+void cpu_temperature(char *);
+void battery_charge(char *);
+void free_disk(char *);
+void free_memory(char *);
+void volume(char *);
+void date_time(char *);
+
+#include "config.h"
 
 #define BUFFER_SIZE 128
 #define WIDGETS_BUFFER_SIZE 896
@@ -138,13 +147,15 @@ int main(void) {
   struct timespec interval = {.tv_sec = INTERVAL, .tv_nsec = 0};
 
   while (true) {
-    add_widget(widgets, music, true);
-    add_widget(widgets, cpu_temperature, true);
-    add_widget(widgets, battery_charge, true);
-    add_widget(widgets, free_disk, true);
-    add_widget(widgets, free_memory, true);
-    add_widget(widgets, volume, true);
-    add_widget(widgets, date_time, false);
+    for (int i = 0; widgets_list[i].name != NULL; i++)
+      add_widget(widgets, widgets_list[i].name, widgets_list[i].with_delimiter);
+    // add_widget(widgets, music, true);
+    // add_widget(widgets, cpu_temperature, true);
+    // // add_widget(widgets, battery_charge, true);
+    // add_widget(widgets, free_disk, true);
+    // add_widget(widgets, free_memory, true);
+    // add_widget(widgets, volume, true);
+    // add_widget(widgets, date_time, false);
 
     snprintf(status_cmd, STATUS_LINE_BUFFER_SIZE, "xsetroot -name \"%s\"",
              widgets);
