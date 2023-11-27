@@ -1,4 +1,4 @@
-#define DATE_FORMAT "%F %H:%M:%S"
+#define DATE_FORMAT "%a %Y-%m-%d %H:%M:%S"
 #define NA_STRING "N/A"
 #define MOUNT_POINT "/"
 #define INTERVAL 1
