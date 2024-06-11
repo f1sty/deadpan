@@ -1,4 +1,4 @@
-#define DATE_FORMAT "%a %Y-%m-%d %H:%M:%S"
+#define DATE_FORMAT "%b %d/%m/%y %A %H:%M:%S"
 #define NA_STRING "N/A"
 #define MOUNT_POINT "/"
 #define INTERVAL 1
@@ -6,7 +6,7 @@
 /* To get right thermal zone number for CPU temperature run
    "cat /sys/class/thermal/thermal_zone<THERMAL_ZONE>/type".
    You are looking for `x86_pkg_temp` type. */
-#define THERMAL_ZONE 2
+#define THERMAL_ZONE 14
 /* /sys/class/power_supply/BAT<BATTERY> */
 #define BATTERY 0
 #define VOLUME_CMD "volume.sh"
@@ -20,7 +20,7 @@ struct widget {
 const struct widget widgets_list[] = {
     {.name = music, .with_delimiter = true},
     {.name = cpu_temperature, .with_delimiter = true},
-    // {.name = battery_charge, .with_delimiter = true},
+    {.name = battery_charge, .with_delimiter = true},
     {.name = free_disk, .with_delimiter = true},
     {.name = free_memory, .with_delimiter = true},
     {.name = volume, .with_delimiter = true},
