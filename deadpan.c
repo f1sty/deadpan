@@ -104,8 +104,16 @@ void free_memory(char *widgets) {
 
 void cpu_temperature(char *widgets) {
   char path[BUFFER_SIZE] = {0};
-  snprintf(path, BUFFER_SIZE, "/sys/class/thermal/thermal_zone%d/temp",
-           THERMAL_ZONE);
+  switch (THERMAL_TYPE) {
+    case 0:
+      snprintf(path, BUFFER_SIZE, "/sys/class/thermal/thermal_zone%d/temp", THERMAL_ZONE);
+      break;
+    case 1:
+      snprintf(path, BUFFER_SIZE, "/sys/class/hwmon/hwmon%d/temp1_input", THERMAL_ZONE);
+      break;
+    default:
+      snprintf(path, BUFFER_SIZE, "/sys/class/thermal/thermal_zone%d/temp", THERMAL_ZONE);
+  }
 
   char retval[BUFFER_SIZE] = {0};
   FILE *fd = fopen(path, "r");
