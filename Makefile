@@ -12,7 +12,7 @@ debug: $(TARGET)
 $(TARGET): $(OBJECTS)
 	gcc -o $@ $<
 
-$(OBJECTS): %.o: %.c
+$(OBJECTS): %.o: %.c config.h
 	gcc $(CFLAGS) -c $<
 
 clean:
